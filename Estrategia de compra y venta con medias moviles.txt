@@ -1,0 +1,37 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © zkdev
+
+//@version=5
+strategy('Bull Market Support Band Strategy', overlay=true)
+
+// Parámetros de la SMA y EMA
+source = close
+smaLength = 20
+emaLength = 21
+
+// Cálculo de las medias móviles
+sma = ta.sma(source, smaLength)
+ema = ta.ema(source, emaLength)
+
+// Obtener los valores de la SMA y EMA en el marco de tiempo actual
+outSma = request.security(syminfo.tickerid, timeframe.period, sma)
+outEma = request.security(syminfo.tickerid, timeframe.period, ema)
+
+// Trazar las líneas de la SMA y EMA
+smaPlot = plot(outSma, color=color.new(color.red, 0), title='20w SMA')
+emaPlot = plot(outEma, color=color.new(color.green, 0), title='21w EMA')
+
+// Rellenar el área entre la SMA y EMA
+fill(smaPlot, emaPlot, color=color.new(color.orange, 75), fillgaps=true)
+
+// Condiciones de entrada y salida para la estrategia
+longCondition = ta.crossover(source, math.max(outSma, outEma))   // Compra cuando el precio cruza de abajo hacia arriba la BMSB
+shortCondition = ta.crossunder(source, math.min(outSma, outEma)) // Venta cuando el precio cruza de arriba hacia abajo la BMSB
+
+// Ejecutar las órdenes de compra y venta
+if (longCondition)
+    strategy.entry('Long', strategy.long)
+
+if (shortCondition)
+    strategy.close('Long')
+    strategy.entry('Short', strategy.short)

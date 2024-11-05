@@ -1,0 +1,35 @@
+//@version=5
+indicator("Cuartiles de Volumen", overlay=true)  // Cambié 'overlay=false' a 'overlay=true' para que solo se dibujen los cuartiles en el gráfico principal
+
+// Parámetros de entrada
+timeframeHoras = "240"  // 240 minutos (4 horas)
+diasSemana = 7
+numVelasSemana = diasSemana * 6  // 6 velas de 4H por día
+
+// Obtener el volumen en la temporalidad de 4 horas
+volumenActual = request.security(syminfo.tickerid, timeframeHoras, volume)
+
+// Crear una matriz para almacenar los valores de volumen de la última semana
+volumenArray = array.new_float(numVelasSemana, 0)
+
+// Llenar el array con los volúmenes de las últimas velas
+for i = 0 to numVelasSemana - 1
+    array.set(volumenArray, i, volume[i])
+
+// Ordenar el array para calcular los cuartiles
+array.sort(volumenArray, order.ascending)
+primerCuartil = array.get(volumenArray, int(numVelasSemana * 0.25) - 1)
+segundoCuartil = array.get(volumenArray, int(numVelasSemana * 0.50) - 1)
+tercerCuartil = array.get(volumenArray, int(numVelasSemana * 0.75) - 1)
+
+// Determinar en qué cuartil se encuentra el volumen actual
+cuartil = volumenActual < primerCuartil ? 1 : 
+          volumenActual < segundoCuartil ? 2 : 
+          volumenActual < tercerCuartil ? 3 : 4
+
+// Eliminar la gráfica de volumen para que solo se vean los números
+// Mostrar el cuartil encima de las barras de volumen usando plotshape
+plotshape(series=cuartil == 1, location=location.abovebar, color=color.green, style=shape.labelup, text="1", size=size.small)
+plotshape(series=cuartil == 2, location=location.abovebar, color=color.yellow, style=shape.labelup, text="2", size=size.small)
+plotshape(series=cuartil == 3, location=location.abovebar, color=color.orange, style=shape.labelup, text="3", size=size.small)
+plotshape(series=cuartil == 4, location=location.abovebar, color=color.red, style=shape.labelup, text="4", size=size.small)
